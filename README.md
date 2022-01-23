@@ -10,5 +10,7 @@
 ### [CS231n]()
 
 ***
-## [Machine Learning]()
-### [핸즈 온 머신러닝]()
+## [Machine Learning](https://github.com/kueyeon0429/TIL/tree/main/MachineLearning)
+### [핸즈 온 머신러닝](https://github.com/kueyeon0429/TIL/tree/main/MachineLearning/%ED%95%B8%EC%A6%88_%EC%98%A8_%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D)
+- [Chapter3 분류](https://github.com/kueyeon0429/TIL/blob/main/MachineLearning/%ED%95%B8%EC%A6%88_%EC%98%A8_%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D/3%EC%9E%A5_%EB%B6%84%EB%A5%98.ipynb)
+- [Chapter4 모델 훈련]()
