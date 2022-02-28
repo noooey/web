@@ -1,0 +1,693 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Chapter 08 가상 메모리의 기초</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	text-indent: -1.7em;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+}
+
+.simple-table-header {
+	background: rgb(247, 246, 243);
+	color: black;
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.highlight-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.highlight-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.block-color-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.block-color-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-pink { background-color: rgba(245, 224, 233, 1); }
+.select-value-color-purple { background-color: rgba(232, 222, 238, 1); }
+.select-value-color-green { background-color: rgba(219, 237, 219, 1); }
+.select-value-color-gray { background-color: rgba(227, 226, 224, 1); }
+.select-value-color-opaquegray { background-color: rgba(255, 255, 255, 0.0375); }
+.select-value-color-orange { background-color: rgba(250, 222, 201, 1); }
+.select-value-color-brown { background-color: rgba(238, 224, 218, 1); }
+.select-value-color-red { background-color: rgba(255, 226, 221, 1); }
+.select-value-color-yellow { background-color: rgba(253, 236, 200, 1); }
+.select-value-color-blue { background-color: rgba(211, 229, 239, 1); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="7d4409e7-a183-489e-9021-17a0a1b1bb00" class="page sans"><header><h1 class="page-title">Chapter 08 가상 메모리의 기초</h1></header><div class="page-body"><p id="0c3bc9ea-3669-49d5-b6db-581fd901c4c9" class="">2022-02-28 OS 스터디 6주차</p><h1 id="dde431f7-edaa-46ba-a300-a840c63d8311" class="">01 가상 메모리의 개요</h1><p id="d741521a-853c-41ec-b0a9-5919e4be7fb0" class=""><mark class="highlight-yellow_background"><strong>가상 메모리</strong></mark> 크기가 다른 물리 메모리에서 일관되게 프로세스를 실행할 수 있는 기술</p><h2 id="a52c4f67-2be5-4cd2-af63-656f93467b71" class="">1. 가상 메모리 시스템</h2><h3 id="5cae41c3-930e-4ff5-9869-3c7f8507bdcd" class="">가상 메모리 개념</h3><p id="78ab8cca-1004-4bbc-85f0-5bf90093f692" class="">컴퓨터마다 메모리 크기가 다른데 운영체제가 물리 메모리의 크기에만 의존한다면 필요한 메모리 크기가 맞지 않을 경우 프로그램이 동작하지 않을 수 있음❗</p><ul id="69666bbf-eb80-4262-97c9-da22a9259da4" class="toggle"><li><details open=""><summary><strong><mark class="highlight-yellow_background">가상 메모리</mark></strong></summary><p id="60ed9ae0-43b1-4205-9512-6a7c2f216128" class="">물리 메모리의 크기와 프로세스가 올라갈 메모리의 위치를 신경쓰지 않고 프로그래밍하도록 지원하는 메모리 시스템</p><p id="694bb754-e096-4432-a019-21c3ec21f5e5" class=""><strong>물리 메모리의 크기와 상관없이</strong> 프로세스에 커다란 메모리 공간을 제공</p><p id="5710935a-7397-4fdb-adab-69e6db62a50c" class="">
+</p></details></li></ul><h3 id="4d052f25-3f1f-4c08-845f-8adff4c1c55f" class="">가상 메모리의 크기와 주소</h3><p id="3cec8e08-7b2c-4c4b-a042-55c056f2b7d2" class="block-color-gray_background">가상 메모리 시스템의 모든 프로세스는 물리 메모리와 별개로 <strong>자신이 메모리의 어느 위치에 있는지 상관없이 0번지부터 시작</strong>하는 연속된 메모리 공간을 가진다.</p><p id="9397a819-cf0e-4513-8edc-9af17eb6f3c6" class=""><code>논리 주소</code> 물리 메모리의 주소 공간에 비례</p><p id="ff3a9e01-f35c-4385-b7e4-5efee0ebe15a" class=""><code>가상 주소</code> 가상 주소 공간</p><figure id="c8f8f029-ea3d-4433-98fc-484882ec9eb9" class="image"><a href="Chapter%2008%20c8f8f/Untitled.png"><img style="width:724px" src="Chapter%2008%20c8f8f/Untitled.png"/></a></figure><p id="8dc8fa48-d386-48d1-8142-69f1db0457b7" class="">
+</p><p id="cc6d2061-7691-41a3-9e4d-c8dba51d4bb0" class="">이론적으로는 가상 메모리는 무한대의 크기</p><p id="e51003eb-d36b-4ae3-a36f-65667e8dcd92" class="">실제로는 <strong>가상 메모리의 최대 크기</strong>는 그 컴퓨터 시스템이 가진 <strong>물리 메모리의 최대 크기</strong>로 한정됨</p><p id="2ba2106c-e3c0-4303-a58d-a55a50d2cdf1" class="">→ <strong>CPU의 비트</strong>에 따라 결정</p><p id="9e583979-1553-497b-92d9-5a2b1ac995de" class="">
+</p><p id="8338a59e-53ae-4fa0-b446-328b7e172a0d" class="block-color-orange_background">메모리 관리자는 <strong>물리 메모리</strong>의 <strong>부족한 부분</strong>을 <strong>스왑 영역</strong>으로 <strong>보충</strong>한다</p><ul id="55069189-1aae-4f58-a0d7-85f4b6970b0b" class="toggle"><li><details open=""><summary><strong><mark class="highlight-yellow_background">스왑 영역</mark></strong><strong> </strong></summary><p id="79b306ed-80af-42e6-babf-5146cbde3877" class="">가상 메모리의 구성 요소 중 하나, 하드디스크에 존재, 메모리 관리자가 관리하는 영역으로서 메모리의 일부</p></details></li></ul><ul id="e65043a4-aae2-410a-a983-94d3cf291f69" class="bulleted-list"><li style="list-style-type:disc"><code>스왑아웃</code> 물리 메모리가 꽉 찼을 때 프로세스를 <strong>스왑 영역으로 보냄</strong></li></ul><ul id="8f38da3d-8bab-452a-840e-76f15cd0a1a7" class="bulleted-list"><li style="list-style-type:disc"><code>스왑인</code> 몇 개의 프로세스가 작업을 마치면 스왑 영역에 있는 프로세스를 <strong>메모리로 가져옴</strong></li></ul><p id="4da23321-8ee8-4942-9f18-f311bbea464d" class="">
+</p><p id="a517820a-b8bc-4e58-924b-82c54542c68c" class="block-color-orange_background"><strong>가상 메모리의 크기 = 물리 메모리 + 스왑 영역</strong></p><ul id="c0fef76e-8483-45c8-b9ea-afa376ad6745" class="toggle"><li><details open=""><summary><strong><mark class="highlight-yellow_background">동적 주소 변환</mark></strong></summary><p id="1b8f4d44-f7b6-470e-8625-b611853a0ca8" class="">가상 메모리 시스템에서 메모리 관리자는 물리 메모리와 스왑 영역을 합쳐서 프로세스가 사용하는 <strong>가상 주소</strong>를 <strong>실제 메모리의 물리 주소</strong>로 <strong>변환</strong></p><p id="c2eef2cf-7ba3-4b9d-9ead-22d5ba2f9e4b" class="">아무 제약 없이 사용자의 데이터를 물리 메모리에 배치할 수 잇음</p></details></li></ul><p id="95031886-0935-4e30-9369-3f02d747a4e7" class="">
+</p><h3 id="3fe59fe3-6e25-4c79-a070-ccecbf225c38" class="">가상 메모리의 메모리 분할 방식</h3><p id="7924e42f-f975-45a7-9a97-4321f6eac757" class="">가상 메모리 시스템에서는 운영체제(물리 주소 0번지)를 제외한 나머지 메모리 영역을 일정한 크기로 나누어 일반 프로세스에 할당</p><ul id="5e0a7cb7-4e75-44df-aebc-e1677fc4f7de" class="bulleted-list"><li style="list-style-type:disc">가변 분할 방식 → <strong><mark class="highlight-yellow_background">세그멘테이션</mark></strong></li></ul><ul id="572fcff9-4bd7-4fd0-982c-7e757c70205a" class="bulleted-list"><li style="list-style-type:disc">고정 분할 방식 → <strong><mark class="highlight-yellow_background">페이징</mark></strong></li></ul><p id="03cd428c-4bc5-4480-9bd0-ce03a0dbe52f" class="block-color-orange_background"><strong>세그멘테이션-페이징 혼용 기법</strong> 주로 사용</p><p id="4d68b62b-1b76-4736-9546-fd064e0c2d1e" class="">
+</p><figure id="e222d37e-e2a6-4783-a1c7-f47faf2225a3" class="image"><a href="Chapter%2008%20c8f8f/Untitled%201.png"><img style="width:627px" src="Chapter%2008%20c8f8f/Untitled%201.png"/></a></figure><p id="7ac56239-0d51-4a7d-8511-2efa0158afab" class="">
+</p><h2 id="9e97b20d-2cd9-46f5-9c72-c657fd9d8fcf" class="">매핑 테이블의 필요성과 역할</h2><p id="3a97866d-7c42-466d-823c-49e38fe0e93d" class="block-color-gray_background">가상 메모리 시스템에서 <strong>가상 주소</strong>는 실제로 <strong>물리 주소나 스왑 영역 중 한 곳</strong>에 위치하며, 메모리 관리자는 가상 주소와 물리 주소를 <strong>일대일 매핑 테이블</strong>로 관리한다</p><figure id="cd8891b7-a153-466b-8b80-86544c85a01b" class="image"><a href="Chapter%2008%20c8f8f/Untitled%202.png"><img style="width:678px" src="Chapter%2008%20c8f8f/Untitled%202.png"/></a></figure><ul id="e40f5785-5dbd-441a-911b-53c3ac52eb9d" class="bulleted-list"><li style="list-style-type:disc">페이징 기법에서 사용하는 매핑 테이블 <strong>페이지 매핑 테이블</strong></li></ul><ul id="4ac9920e-e712-4eb9-a103-bdc4484e78ee" class="bulleted-list"><li style="list-style-type:disc">세그먼테이션 기법에서 사용하는 매핑 테이블 <strong>세그먼테이션 매핑 테이블</strong></li></ul><p id="61c3def9-7ad6-442a-a832-9782cd60af6e" class="">
+</p><h1 id="07818636-ac1d-4e5b-95e7-53deaa813479" class="">02 페이징 기법</h1><h2 id="1a403408-4853-4c32-a842-9b7b025cc36f" class="">1. 페이징 기법의 구현</h2><ul id="14f3470a-94e2-4ba2-90c5-ab9e8c2c0e09" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>페이징 기법</strong></mark></summary><p id="ddb90815-5f26-46b2-aa8f-4b02a78b0343" class=""><strong>고정 분할 방식</strong>을 이용한 가상 메모리 관리 기법</p><p id="84d44b84-6729-4edd-b900-d49a461940d3" class="">물리 주소 공간을 <strong>같은 크기</strong>로 나누어 사용</p></details></li></ul><figure id="3fb6e7d9-3281-43c6-aa23-54d842132f4c" class="image"><a href="Chapter%2008%20c8f8f/Untitled%203.png"><img style="width:652px" src="Chapter%2008%20c8f8f/Untitled%203.png"/></a><figcaption>프로세스 입장에서 바라본 메모리 공간, 항상 0번지부터 시작</figcaption></figure><p id="651c9690-5546-414b-b4db-6a66ca590c2c" class="">가상 메모리의 각 영역 <code>페이지</code></p><p id="b5b96ae4-4e70-46e2-8f82-ff48f7db095f" class="">물리 메모리의 각 영역 <code>프레임</code></p><ul id="2e2c6fc3-5855-43fd-a22a-43e6ace8fbe4" class="bulleted-list"><li style="list-style-type:disc"><mark class="highlight-yellow_background"><strong>페이지 크기 == 프레임 크기</strong></mark>  물리 메모리를 같은 크기로 나누어 관리하기 때문에 메모리 관리 수월</li></ul><ul id="c5317cc9-4c9f-4b92-9b6b-b20605cb9c84" class="bulleted-list"><li style="list-style-type:disc">페이지 테이블의 크기가 큼</li></ul><p id="f3297efc-0871-4b56-aea4-7c946af9895c" class="">
+</p><ul id="b8fc6081-9891-457d-a003-f321ca009df4" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>페이지 테이블</strong></mark></summary><p id="477f2ae1-29fe-4053-b958-4dc0719a1309" class=""><strong>페이지와 프레임의 매핑 정보</strong>를 담은 테이블</p><p id="daab1201-e694-48bb-8641-26fb09eb50d3" class="">하나의 열, 모든 페이지의 정보를 <strong>순서대로</strong> 가짐</p><p id="2e1df667-e407-4a68-a607-6cb8c2a6b362" class=""><strong>invalid</strong>는 해당 페이지가 <strong>스왑 영역</strong>에 있다는 의미</p></details></li></ul><p id="41f8350e-432d-42f0-b362-7e250c7df0d0" class="">
+</p><h2 id="17ad306a-8f2b-452a-8eeb-14acd5484cdd" class="">2. 페이징 기법의 주소 변환</h2><h3 id="a5ad299a-4a88-4c90-9844-e3a5884881b4" class="">주소 변환 과정</h3><figure id="74f9ad5b-87bf-4d2e-b5c4-48a1046c100e" class="image"><a href="Chapter%2008%20c8f8f/Untitled%204.png"><img style="width:806px" src="Chapter%2008%20c8f8f/Untitled%204.png"/></a></figure><p id="5e9926b2-c3c2-4ee7-adcb-a33dce6dbe99" class=""><strong>프로세스가 내용을 읽으려고 할 때 가상 주소→ 물리 주소 변환 과정</strong></p><ol type="1" id="b56f6d22-11e9-49e3-9ebe-c1d1bc4b503f" class="numbered-list" start="1"><li>해당 가상 주소가 어느 페이지의 몇 번째(n번째) 인덱스에 존재하는지 확인</li></ol><ol type="1" id="34a37235-0702-4e1f-abf3-defa5aabd97b" class="numbered-list" start="2"><li>페이지 테이블에서 해당 가상 주소가 존재하는 페이지가 어떤 프레임과 매핑되어있는지 확인</li></ol><ol type="1" id="6a2368f8-e67c-4b88-82fb-09567033db63" class="numbered-list" start="3"><li>매핑되어있는 물리 메모리 프레임의 n번째 인덱스에 접근 → 가상 주소의 물리 주소</li></ol><p id="a7c6c1ed-3f16-42b6-8db6-1ef516bbc9ee" class=""><strong>프로세스가 가상 주소에 어떤 값을 저장하려고 할 때의 주소 변환 과정</strong></p><p id="a2718459-963c-48d6-8810-27bb7368ebf3" class="">위와 마찬가지로 물리 메모리 상의 위치 접근 후 저장</p><p id="fd4b3bdb-fc09-488c-94e0-432a22411f14" class="">
+</p><h3 id="f9633b42-7bab-48b6-bc7b-e13231c21ad7" class="">정형화된 주소 변환</h3><ul id="8822072c-6118-483f-95c0-f5e91b3bbb0d" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>가상 주소</strong></mark></summary><p id="30c85330-d0df-4a32-8b3a-f8985ae0d73b" class="">VA=&lt;P,D&gt;</p><p id="b101cca2-f665-43e7-b669-e501bd5ebcd5" class=""><code>VA</code> 가상 주소</p><p id="f9fde45d-7414-4815-bf0f-57bd87519583" class=""><code>P</code> 페이지</p><p id="84ca4a4e-3954-45de-98c1-ae98d5592e8f" class=""><code>D</code> 페이지의 처음 위치에서 해당 주소까지의 거리</p></details></li></ul><ul id="52053558-4142-4859-8574-65772472e623" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>물리 주소</strong></mark></summary><p id="4a811c7b-bb20-4df5-bd71-5e541a2846e0" class="">PA=&lt;F, D&gt;</p><p id="04d03401-d02f-4887-8f09-88f9f90ec2a4" class=""><code>PA</code> 물리 주소</p><p id="14243dbe-60a2-4816-8ae4-99aa3835d9e2" class=""><code>F</code> 프레임</p><p id="0d07c0a9-1e2b-4bc8-a7c7-3a5c61f1ba19" class=""><code>D</code> 프레임의 처음 위치에서 해당 주소까지의 거리</p></details></li></ul><p id="d545c25c-1e25-4073-8120-f3a74a997ad7" class="">
+</p><p id="245130b0-d793-4ee7-b65f-ce9745058d46" class="block-color-orange_background"><strong>VA=&lt;P,D&gt; → PA=&lt;F, D&gt;</strong></p><figure id="006b8195-1bc8-4681-a0bc-4e519194deb0" class="image"><a href="Chapter%2008%20c8f8f/Untitled%205.png"><img style="width:722px" src="Chapter%2008%20c8f8f/Untitled%205.png"/></a></figure><ul id="c4c290aa-9c80-4d15-85db-26ec2d4d35bb" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>페이지 테이블</strong></mark></summary><p id="1ddd42af-f358-4d2a-9549-75a6c6afa883" class="">페이지 번호, 프레임 번호로 구성된 페이지 테이블 엔트리의 집합</p></details></li></ul><h3 id="36aa7b56-dfd7-44a8-a997-d1e9586f61f8" class="">16bit CPU 주소 변환 예</h3><figure id="e9336b02-a8c8-4d37-996f-13664f7f0ab2" class="image"><a href="Chapter%2008%20c8f8f/Untitled%206.png"><img style="width:814px" src="Chapter%2008%20c8f8f/Untitled%206.png"/></a></figure><p id="d32ad767-0d4b-4e36-98c8-0a341d8ff760" class="">
+</p><ul id="e3572c6f-f80e-4e9d-a124-519b88e928e0" class="toggle"><li><details open=""><summary>16bit CPU의 컴퓨터에서 한 페이지의 크기가 2^10B일 때 가상 주소 VA의 구성</summary><figure id="2b68b322-6097-4544-8a39-6a06fc41443d" class="image"><a href="Chapter%2008%20c8f8f/Untitled%207.png"><img style="width:617px" src="Chapter%2008%20c8f8f/Untitled%207.png"/></a></figure><p id="f3ad6e6d-cc56-437b-97ae-3be77688dd31" class="">가상 주소로 사용할 수 있는 16bit 중 6bit는 P로, 10bit는 D로 사용 </p></details></li></ul><p id="478550a6-b9ff-4268-9630-3fca5f44897d" class="">
+</p><ul id="3bb8a929-5da8-4a6f-8570-54a4c8df8041" class="toggle"><li><details open=""><summary>16bit CPU의 컴퓨터에서 한 페이지의 크기가 <style>@import url('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.2/katex.min.css')</style><span data-token-index="0" contenteditable="false" class="notion-text-equation-token" style="user-select:all;-webkit-user-select:all;-moz-user-select:all"><span></span><span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>10</mn></msup></mrow><annotation encoding="application/x-tex">2^{10}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">10</span></span></span></span></span></span></span></span></span></span></span></span></span><span>﻿</span></span>B인 페이징 시스템</summary><figure id="e29dc084-214c-4ee3-96e1-09985b3052f0" class="image"><a href="Chapter%2008%20c8f8f/Untitled%208.png"><img style="width:810px" src="Chapter%2008%20c8f8f/Untitled%208.png"/></a></figure><ul id="2a6805b0-2ae7-4445-8ce6-46ac22340b04" class="bulleted-list"><li style="list-style-type:disc">한 페이지 크기 <style>@import url('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.2/katex.min.css')</style><span data-token-index="0" contenteditable="false" class="notion-text-equation-token" style="user-select:all;-webkit-user-select:all;-moz-user-select:all"><span></span><span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>10</mn></msup></mrow><annotation encoding="application/x-tex">2^{10}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">10</span></span></span></span></span></span></span></span></span></span></span></span></span><span>﻿</span></span>B</li></ul><ul id="a08ea557-506f-4218-af2c-38459a9f0570" class="bulleted-list"><li style="list-style-type:disc">전체 페이지 수 <style>@import url('https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.2/katex.min.css')</style><span data-token-index="0" contenteditable="false" class="notion-text-equation-token" style="user-select:all;-webkit-user-select:all;-moz-user-select:all"><span></span><span><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>6</mn></msup></mrow><annotation encoding="application/x-tex">2^6</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span></span><span>﻿</span></span>  </li></ul></details></li></ul><p id="9ff5df84-72f9-46e8-8807-b29636c7e51d" class="">실제 메모리가 최대가 아니더라도 잘 작동함</p><p id="cdc15fec-704f-4a5a-9889-c86b85554b14" class=""><strong>부족한 물리 메모리</strong>는 <strong>스왑</strong>으로 처리</p><p id="95910fef-f87b-4194-81cf-9d9cc6ad7ae7" class="">물리 주소의 부족한 부분은 페이징 시스템에서 문제가 되지 않음</p><p id="f3c10dbb-0b78-4069-a2ab-ad170e884819" class="">
+</p><ul id="a7dc0eb3-ba09-43b9-ac1b-2de2d7821997" class="toggle"><li><details open=""><summary>ex)</summary><p id="68316a5c-f34a-4f21-a6bf-fff3a0891e78" class="">가상 주소 980번지의 페이지 P와 거리 D를 구한다. P는 0(980/1024의 몫), D는 980(980/1024의 나머지) → VA = &lt;0, 980&gt;</p><p id="10ffd01f-91e1-45f4-abc9-046b223606d4" class="">페이지 테이블에서 페이지 0이 프레임 2에 매핑되어있는 것을 확인</p><p id="0a7d15ed-d811-4407-9ba2-fcb446e56826" class="">물리 메모리 프레임 2의 시작 지점으로부터 980번지 떨어진 곳에 접근하여 데이터를 가져옴</p></details></li></ul><p id="ffc17b98-0aad-4034-a720-bbc5c23f635f" class="">
+</p><h2 id="1cbcfd30-a8bb-426a-ac9b-63b024d7883f" class="">3. 페이지 테이블 관리</h2><p id="676b00bc-0c3e-4a22-aa37-5caa82175b84" class="block-color-orange_background">시스템 내에는 여러 개의 프로세스가 존재하고 <strong>프로세스마다 하나의 페이지 테이블</strong>이 있음</p><p id="d2874980-448d-42a2-b4b6-be8dbf46f5e2" class="">때문에 전체 페이지 테이블의 크기는 프로세스의 수에 비례해서 커짐</p><p id="57e6d1c6-b86e-49a2-897b-728929657ebf" class="">→ 페이지 테이블의 크기를 적정하게 유지하는 것이 중요</p><figure id="d54261d9-37f9-4c1a-ae65-dee8b0b38f83" class="image"><a href="Chapter%2008%20c8f8f/Untitled%209.png"><img style="width:810px" src="Chapter%2008%20c8f8f/Untitled%209.png"/></a></figure><p id="cb4c8a6a-8d53-4a69-9c5c-4712fb41f1af" class="">
+</p><p id="f044ca12-3a10-423e-9e3f-a4ce38a87402" class=""><strong>메모리 관리자</strong>는 <strong>특정 프로세스가 실행될 때</strong>마다 해당 <strong>페이지 테이블</strong>을 참조하여 <strong>가상 주소를 물리 주소로 변환</strong>하는 작업을 반복</p><p id="8a62b1a5-45b6-455e-8146-e930b6ac118d" class="block-color-orange_background"><strong>페이지 테이블</strong>은 메모리 관리자가 자주 이용하므로 <strong>빨리 접근</strong>할 수 있어야한다</p><figure id="b5db9ea2-a104-4b14-ac37-554bd91411e7" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2010.png"><img style="width:766px" src="Chapter%2008%20c8f8f/Untitled%2010.png"/></a></figure><ul id="e117eeaf-892b-41b3-8f5f-d011ba8a3348" class="bulleted-list"><li style="list-style-type:disc">물리 메모리 영역 중 <strong>운영체제 영역의 일부분</strong>에 모아놓음<ul id="53502f21-d0bc-4b55-bbde-96cf697b3f5f" class="bulleted-list"><li style="list-style-type:circle">페이지 테이블의 수가 늘어나거나 크기가 늘어나면 <strong>운영체제 영역</strong>이 늘어나 그만큼 사용자 영역이 줄어든다.</li></ul><ul id="8e034233-1495-422a-a918-e8965e3c4173" class="bulleted-list"><li style="list-style-type:circle">물리 메모리의 크기가 작을 때는 프로세스만 스왑 영역으로 옮겨지는 것이 아니라 페이지 테이블의 일부도 스왑 영역으로 옮겨진다.</li></ul></li></ul><ul id="45ad40bf-c36d-41b3-9daf-af082b534d1c" class="bulleted-list"><li style="list-style-type:disc">각 페이지 테이블의 <strong>시작 주소</strong>를 <strong>페이지 테이블 기준 레지스터</strong>에 보관<ul id="5cdc87d4-edc3-4d70-a746-df70985c9291" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>페이지 테이블 기준 레지스터</strong></mark></summary><p id="84a1505e-3bed-40fb-852f-3975efa5d3c9" class="">각 프로세스의 프로세스 제어 블록에 저장되는 데이터</p><p id="b86c1db6-0875-4d90-a09f-ed97709012f7" class="">물리 메모리 내에 페이지 테이블의 시작 주소를 가짐</p></details></li></ul></li></ul><p id="9e10b8a6-01c6-4ea2-a77b-0b33e142bfae" class="">
+</p><h2 id="cee87d3d-e739-4e76-b25b-bc84043c2694" class="">4. 페이지 테이블 매핑 방식</h2><p id="79b8c4f9-d02a-409b-87b2-66516cd31e3f" class=""><strong>페이지 테이블이 위치한 곳(메모리, 스왑)에 따라</strong> 다양한 페이지 테이블 매핑 방식 존재</p><figure id="91167d99-9d2c-4186-9cf5-94dcc50bf803" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2011.png"><img style="width:819px" src="Chapter%2008%20c8f8f/Untitled%2011.png"/></a></figure><p id="8d74ad64-b07b-4e65-b473-bf8e828efe36" class="">
+</p><h3 id="fbc27716-38b9-41e3-905c-ccc8db86c5e0" class="">직접 매핑</h3><p id="60bec388-7edd-48ce-b93d-496356a544a6" class="block-color-gray_background">페이지 테이블 <strong>전체가 물리 메모리의 운영체제 영역</strong>에 존재하는 방식</p><ul id="05425eff-03a3-4434-8cd9-4947df5ecb0d" class="bulleted-list"><li style="list-style-type:disc">바로 주소 변환 가능</li></ul><figure id="447b08bb-58dd-44a7-9e12-7f629c92b323" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2012.png"><img style="width:704px" src="Chapter%2008%20c8f8f/Untitled%2012.png"/></a></figure><p id="02055c71-db1f-42f3-ae3d-704aef0293d4" class=""><mark class="highlight-yellow_background"><strong>페이지 테이블 기준 레지스터</strong></mark>가 페이지 테이블의 <strong>시작 주소</strong>를 가지고 있으므로 물리 메모리상 페이지 테이블의 P번째 주소가 시작 주소로부터 P번째 위치에 존재함</p><p id="2bc5a6cb-26f9-44df-a66d-059dbfa7baf7" class="">
+</p><h3 id="f3ff7729-c4b5-43a8-bb2b-8dc9bec6a0f3" class="">연관 매핑</h3><p id="e9a3869d-379c-4d70-93ab-53a2c984b978" class="block-color-gray_background">페이지 테이블 <strong>전체를 스왑 영역</strong>에서 관리하고 일부만 물리 메모리로 가져옴</p><ul id="b3b92964-f7c8-43d5-8498-2e4ca04be00a" class="bulleted-list"><li style="list-style-type:disc">물리 메모리 절약</li></ul><ul id="189a020e-06e5-4f3c-8779-dd86c5ead362" class="bulleted-list"><li style="list-style-type:disc">페이지 번호와 프레임 번호 둘 다 표시</li></ul><ul id="d7a34538-c97f-4355-810c-2a61254574a0" class="bulleted-list"><li style="list-style-type:disc">물리 메모리에 있는 데이터가 <strong>무작위</strong>로 올라오기 때문에 원하는 프레임 번호를 얻기 위해 <strong>모든 테이블을 검색</strong>해야하는 문제❗</li></ul><figure id="fe9f1867-8f28-4896-8aea-dd5e2154cd9f" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2013.png"><img style="width:815px" src="Chapter%2008%20c8f8f/Untitled%2013.png"/></a></figure><p id="4d86c7d4-4ae8-4122-a208-40663348abb7" class=""><strong><mark class="highlight-yellow_background">변환 색인 버퍼</mark></strong> 무작위로 가져온 일부 페이지 테이블</p><p id="c47e651f-7ab1-4850-b152-6fe17aa482ed" class="">메모리에 접근하기 위해 먼저 변환 색인 버퍼를 찾아봄</p><ul id="eaa114b6-cb5f-4c49-96af-07d82f4a10ec" class="bulleted-list"><li style="list-style-type:disc">원하는 페이지 번호가 변환 색인 버퍼에 <strong>있는</strong> 경우 → <mark class="highlight-yellow_background"><strong>TLB 히트</strong></mark> → 곧바로 <strong>물리 주소</strong>로 변환</li></ul><ul id="3e4743dc-e7ab-4b99-85da-a4bc075ea8c3" class="bulleted-list"><li style="list-style-type:disc">원하는 페이지 번호가 변환 색인 버퍼에 <strong>없는</strong> 경우 → <mark class="highlight-yellow_background"><strong>TIL 미스</strong></mark> → <strong>스왑 영역</strong>에 저장된 <strong>직접 매핑 테이블</strong>을 사용하여 <strong>프레임 번호</strong>로 변환<ul id="771bf1de-d962-41ef-9b0f-70e0163ac2ff" class="bulleted-list"><li style="list-style-type:circle"><strong>모든 변환 색인 버퍼를 검색한 후에야</strong> <strong>TLB 미스</strong>를 알 수 있음</li></ul></li></ul><p id="79af66b5-4a20-41eb-a6e9-2fab383766c6" class="">
+</p><h3 id="d1c5ae48-1885-4979-bd37-46b8854c0b49" class="">집합-연관 매핑</h3><p id="5b3e9c6d-ff9d-4b45-82ce-d697b3cf0387" class="block-color-gray_background">페이지 테이블 <strong>전체를 스왑 영역</strong>에서 관리하고 일부만 물리 메모리로 가져옴</p><ul id="65f87867-0829-47bd-bb4a-93c628f26b92" class="bulleted-list"><li style="list-style-type:disc">페이지 테이블을 <strong>일정한 집합</strong>으로 자르고, 자른 <strong>덩어리 단위로</strong> 물리 메모리에 가져옴 → 연관 매핑 개선</li></ul><figure id="9dfe2455-ba86-4e86-9f3e-3ec83dd8e45e" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2014.png"><img style="width:849px" src="Chapter%2008%20c8f8f/Untitled%2014.png"/></a></figure><p id="d11c1ca0-f641-4de7-9cb3-71008bf82f1c" class=""><mark class="highlight-yellow_background"><strong>디렉터리 테이블</strong></mark> 해당 묶음이 현재 메모리에 잇는지, 스왑 영역에 있는지 위치 정보를 표시하는 테이블</p><ul id="4f7ccb9d-a47c-4b73-901c-2b5a7fa86bb6" class="bulleted-list"><li style="list-style-type:disc">전체 테이블을 살피지 않고 디렉터리 테이블만 살펴봐도 원하는 테이블 묶음이 어디에 있는지 알 수 있음 → <strong>TLB 미스</strong>를 바로 알 수 있음</li></ul><ul id="df138417-a606-4ece-8292-d617b48e03b0" class="bulleted-list"><li style="list-style-type:disc"><strong><mark class="highlight-orange_background">VA = &lt;P1, P2, D&gt;</mark></strong> 두 단계를 거쳐 물리 주소로 전환<ul id="02c79d88-de0f-4862-8618-0f481f24406e" class="bulleted-list"><li style="list-style-type:circle"><code>P1</code> 디렉터리 테이블에서의 위치 정보</li></ul><ul id="7774982c-40d8-43f6-8477-39409d4ee2ed" class="bulleted-list"><li style="list-style-type:circle"><code>P2</code> 묶음 내에서의 위치 정보</li></ul></li></ul><p id="7ca0fd4f-007f-4992-81ef-fa9c4cb9c7f1" class="">
+</p><p id="1ada9a79-a523-4492-ae60-73d1483e7979" class=""><strong>프로세스가 특정 주소 요구</strong></p><ol type="1" id="6b42c1d4-0920-47dd-b71f-595cd8175817" class="numbered-list" start="1"><li>VA = &lt;P1, P2, D&gt; 변환</li></ol><ol type="1" id="6e0eb481-0451-4784-b4bb-804c46aa1a49" class="numbered-list" start="2"><li>P1을 이용하여 디렉터리 테이블에서 주소를 찾음<ol type="a" id="237bb3c5-4157-42b6-b5d8-e37d6f1e038c" class="numbered-list" start="1"><li>I(invalid) 표시 → TLB 미스</li></ol><ol type="a" id="b2995eb8-47ad-459a-804e-ab886b6b05a7" class="numbered-list" start="2"><li>묶음 테이블의 시작 주소 명시 → TLB 히트</li></ol></li></ol><ol type="1" id="efebbf6f-72db-451f-b4cb-f9d22ce559c0" class="numbered-list" start="3"><li>P2를 이용하여 묶음 테이블에서 원하는 프레임 번호를 얻음</li></ol><p id="066b4d2b-8c04-46a3-8954-36ea25742678" class="">
+</p><ul id="9c3f806c-b0e4-420d-a299-d5828cf14b60" class="bulleted-list"><li style="list-style-type:disc"><strong>시간 낭비 발생 X</strong>  디렉터리 테이블을 이용해 묶음 테이블의 위치 바로 확인 가능, 전체 검색 X</li></ul><ul id="a24ddb5e-7462-45eb-a5e4-dfbd0729e143" class="bulleted-list"><li style="list-style-type:disc"><strong>물리 메모리 낭비 X </strong> 일부 페이지 테이블만 메모리에서 관리</li></ul><p id="43b4c075-7251-44f8-8955-b3cf6b04281e" class="">
+</p><h3 id="bc074dab-194d-4ecc-9e53-38d512a71157" class="">역매핑</h3><p id="754e16d6-1ff1-406f-aaf6-be4f0a59fbc5" class="block-color-gray_background">물리 메모리의 <strong>프레임 번호</strong>를 기준으로 테이블 구성</p><ul id="5ed646ad-ae9e-41e7-97eb-6a8dbbe47b07" class="bulleted-list"><li style="list-style-type:disc">프로세스 수와 상관없이 <strong>테이블이 하나만</strong> 존재<ul id="4e22c7b3-0bcf-4f16-b740-c5e55286558c" class="bulleted-list"><li style="list-style-type:circle">프로세스 수와 상관 없이 항상 일정 크기의 페이지 테이블 유지 → 페이지 테이블의 크기가 매우 작음</li></ul></li></ul><ul id="953dc044-10bf-4a3b-a5ba-d15443bd0092" class="bulleted-list"><li style="list-style-type:disc">가상 메모리에 접근할 때 <strong>프로세스 아이디와 페이지 번호를 모두</strong> 찾아야 함❗</li></ul><ul id="00fb9461-3e10-4c3e-97e9-5f238e311640" class="bulleted-list"><li style="list-style-type:disc">모든 페이지를 검색한 후에야 해당 페이지가 스왑 영역에 있다는 것을 알게 되므로 <strong>속도가 아주 느림</strong>❗</li></ul><div id="e6e81ee1-4290-41fd-a78e-4e22d5fca964" class="column-list"><div id="d50aaf8b-937f-4e22-8cf1-96c8276d48ef" style="width:62.5%" class="column"><figure id="870af30f-3d81-40f4-a6d5-fe47c7d8d648" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2015.png"><img style="width:574px" src="Chapter%2008%20c8f8f/Untitled%2015.png"/></a></figure></div><div id="be3ea295-9ed7-4065-9713-6ed269497154" style="width:37.50000000000001%" class="column"><figure id="ac19aa08-10a9-426f-9ac4-69b1fd66915b" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2016.png"><img style="width:389px" src="Chapter%2008%20c8f8f/Untitled%2016.png"/></a></figure></div></div><p id="ce640cd4-4b42-4845-977f-3fdd339b7621" class="">
+</p><h1 id="9e65913f-bead-4d97-9046-06c572064f06" class="">03 세그먼테이션 기법</h1><h2 id="127cd294-00f6-4295-9b6a-f9080346ddb1" class="">1. 세그먼테이션 기법의 구현</h2><ul id="d0d5ae65-17f2-4709-a46e-4257075d7de5" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>세그먼테이션 기법</strong></mark></summary><p id="2269fd3e-5ffd-4e28-be88-b545759cf38c" class=""><strong>가변 분할 방식</strong>을 이용한 가상 메모리 관리 기법</p><p id="dae9e193-e4e3-42eb-a350-ada78b21c3cb" class=""><strong>세그먼테이션 매핑 테이블</strong> 사용</p></details></li></ul><figure id="f7529432-3314-4cf0-acd4-cae8576b9f55" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2017.png"><img style="width:759px" src="Chapter%2008%20c8f8f/Untitled%2017.png"/></a></figure><p id="7d2f1422-d37c-40a8-99dc-5cfbc0d1c421" class=""><code>limit</code> 세그먼트의 크기</p><p id="4c87bfd5-6f9d-4216-aff3-0333cd9f720c" class=""><code>address</code> 물리 메모리상의 시작 주소</p><p id="d4f801ea-0c39-4b88-9177-21157033a0c4" class="">
+</p><ul id="ca2d13e4-9537-4d70-85e1-28a7c18d75ee" class="bulleted-list"><li style="list-style-type:disc"><strong>물리 메모리</strong>가 부족할 때 <strong>스왑 영역</strong> 사용</li></ul><ul id="3fe8652f-2c1e-43e4-9d4d-009865952b68" class="bulleted-list"><li style="list-style-type:disc"><strong>가변 분할 방식</strong><ul id="99d3325a-23ec-4b91-bfda-f6a1fd68fbea" class="bulleted-list"><li style="list-style-type:circle">메모리를 프로세스 단위로 관리 → 페이지 테이블이 작고 단순</li></ul><ul id="751d770f-4617-4a0b-9f02-7271a35aab18" class="bulleted-list"><li style="list-style-type:circle">물리 메모리의 외부 단편화 → 물리 메모리 관리가 복잡함</li></ul></li></ul><p id="c35a8d67-7261-48e2-aa58-4c4d01f07a64" class="">
+</p><h2 id="492be508-a3e2-48d5-b950-46864daedbbd" class="">2. 세그먼테이션 기법의 주소 변환</h2><ul id="f119bcca-a8b4-4034-8b4c-798167cd9051" class="toggle"><li><details open=""><summary><mark class="highlight-orange_background"><strong>VA = &lt;S, D&gt;</strong></mark></summary><p id="3cba6cdd-8b48-4a95-8754-25b76f3d901b" class=""><code>S</code> 세그먼트 번호</p><p id="118d6832-21d0-4dcf-8a82-a858d2ab44f6" class=""><code>D</code> 세그먼트 시작 지점에서 해당 주소까지의 거리</p></details></li></ul><p id="3783356e-035d-41e4-9df6-f08c6af9ad79" class="">
+</p><figure id="0f943338-9408-4f7a-a19e-ecde6c473ceb" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2018.png"><img style="width:701px" src="Chapter%2008%20c8f8f/Untitled%2018.png"/></a></figure><p id="3f2842cf-af48-4532-aa0f-80e6cc2a3ce6" class="">ex) 프로세스 A가 세그먼트 0으로 분할되어 있을 때, 프로세스 A의 32번지 접근 시 주소 변환 과정</p><ol type="1" id="13253d6c-17cc-4f83-ba29-7ad8ec372c3c" class="numbered-list" start="1"><li>가상 주소를 구함, VA = &lt;0, 32&gt;</li></ol><ol type="1" id="41a8b350-cd28-448c-b9d0-08001234c1ff" class="numbered-list" start="2"><li>세그먼트 테이블에서 세그먼트 0의 시작 주소를 알아냄</li></ol><ol type="1" id="89b753c7-dbd1-4a28-9334-4171acf66e76" class="numbered-list" start="3"><li>시작 주소 120 + 거리 32 = 물리주소 152번지<p id="a39f662c-11a1-45ec-8685-77aa6dda6071" class="">이 때 메모리 관리자는 거리가 세그먼트 크기보다 큰지 점검</p><ul id="13131578-9f44-4a58-88ae-16695577769b" class="bulleted-list"><li style="list-style-type:disc"><code>거리 &gt; 세그먼트</code> 크기 메모리 오류 출력, 프로세스 강제 종료</li></ul><ul id="c294b403-9eee-46d2-afa6-6fa368cd7e5e" class="bulleted-list"><li style="list-style-type:disc"><code>거리 &lt; 세그먼트</code> 크기 물리 주소 구함</li></ul></li></ol><ol type="1" id="f3d97806-58e6-498b-a75a-1fbdd319efb2" class="numbered-list" start="4"><li>물리 주소 152번지에 접근</li></ol><p id="e2591bc2-43a7-4034-b9e6-087431c784f9" class="">
+</p><h1 id="f3b227ef-e8b6-4133-8656-df2ba47178c0" class="">04 세그먼테이션-페이징 혼용 기법</h1><p id="a936067b-2267-4509-be84-b23c8411941f" class=""><strong>페이징 기법</strong> 물리 메모리의 관리가 수월한 장점</p><p id="58f8add4-17bd-48c4-8e51-851dfe1eab44" class=""><strong>세그먼테이션 기법</strong> 테이블 크기를 작게 유지할 수 있는 장점</p><h2 id="5a964bda-6885-4ce3-8e76-7554a064513c" class="">1. 메모리 접근 권한</h2><p id="579ed94a-294e-448d-8d9d-0595b5dfde06" class="block-color-gray_background">메모리의 특정 번지에 저장된 데이터를 사용할 수 있는 권한</p><p id="6dec9cc3-6a1e-4921-a006-cdc10e96377d" class=""><code>읽기</code>, <code>쓰기</code>, <code>실행</code>, <code>추가</code></p><div id="3befee56-8ef3-45bd-81e8-e5af12034cc6" class="column-list"><div id="ca699f0c-112a-418b-9a7e-f8bd922a746e" style="width:50%" class="column"><figure id="bfe66549-d80e-46bf-bc82-f93126567761" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2019.png"><img style="width:533px" src="Chapter%2008%20c8f8f/Untitled%2019.png"/></a></figure></div><div id="fd213da7-ab4e-4233-b93d-2f83fa9e569d" style="width:50%" class="column"><figure id="3efa41e5-b986-4437-9ee7-e1e85b1d4804" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2020.png"><img style="width:597px" src="Chapter%2008%20c8f8f/Untitled%2020.png"/></a></figure></div></div><ul id="575113db-5c5f-429f-9761-b5fbffd31c73" class="bulleted-list"><li style="list-style-type:disc"><strong>코드 영역</strong> 자기 자신을 수정하는 프로그램X → <code>읽기</code>와 <code>실행</code>만</li></ul><ul id="0ad72ef4-c417-4cb4-a22a-24b9be3762fa" class="bulleted-list"><li style="list-style-type:disc"><strong>데이터 영역</strong> <code>읽기</code>만 가능한 데이터, <code>읽기</code>와 <code>쓰기</code>가 가능한 데이터</li></ul><p id="999e51ef-e2e0-48d8-92c1-2f0e15962bf7" class="">
+</p><p id="03758dde-93c7-4b76-8767-4cef2eaf1710" class="block-color-orange_background"><strong>메모리 접근 권한 검사</strong>는 가상 주소에서 물리 주소로 <strong>주소 변환</strong>이 일어날 때마다 시행</p><ul id="fa2d3ff5-a251-4131-af78-756801b289a1" class="bulleted-list"><li style="list-style-type:disc">접근 권한 없이 접그나려고 하면 메모리 오류인 <strong>트랩</strong> 발생</li></ul><ul id="3fb4fd5f-72b7-4fc4-846d-e64a2511b9e5" class="bulleted-list"><li style="list-style-type:disc"><strong>매핑 테이블</strong>에 메모리 접근 권한에 대한 정보 포함</li></ul><p id="f67fa9fd-6ad9-4e62-aea4-c00975087438" class="">
+</p><h2 id="ecc37903-2528-4aeb-8495-23e2103796b4" class="">2. 세그먼테이션-페이징 혼용 기법의 도입</h2><ul id="4c935f5d-9834-4656-adce-f50e4ff67b67" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>페이징 기법</strong></mark></summary><p id="9b9ee8c5-3c3b-4f19-a3e8-2ac9bdabd880" class=""><strong>테이블의 모든 행</strong>에는 메모리 접근 권한과 관련된 <mark class="highlight-yellow_background"><strong>권한 비트</strong></mark> 추가</p><p id="41158371-9330-43dd-a121-61299370c93a" class=""><strong>메모리 관리자</strong>는 <strong>주소 변환</strong>이 이루어질 때마다 페이지 테이블의 권한 비트를 이용하여 <strong>유용한 접근인지 아닌지를 확인</strong></p><figure id="e7a97e71-2c39-46e8-b064-c7b2e419be2e" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2021.png"><img style="width:672px" src="Chapter%2008%20c8f8f/Untitled%2021.png"/></a></figure><p id="d52de8e1-117a-4720-9d11-4dfa6f413c15" class="">메모리 접근 권한이 같은 경우가 많은데도 페이지마다 권한 비트를 설정하여 메모리 낭비❗</p></details></li></ul><p id="d4252d78-0b34-43ef-a2d9-514f875e85aa" class="">
+</p><ul id="c9a4a232-ba82-4f0b-b32d-01117f964324" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>세그먼테이션 테이블 추가</strong></mark></summary><p id="cff21466-4b9e-4237-9fec-b3ff67a648de" class="">페이지로 분할된 가상 주소 공간에서 <strong>서로 관련 있는 영역</strong>을 하나의 세그먼트로 <strong>묶어</strong> <strong>세그먼테이션 테이블</strong>로 관리</p><p id="dce917f9-fa71-4e96-be16-f46917f9b640" class="">각 세그먼트를 구성하는 페이지를 해당 <strong>페이지 테이블</strong>로 관리</p><figure id="4f1466c6-1679-4c95-ac90-4a201b8753e2" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2022.png"><img style="width:853px" src="Chapter%2008%20c8f8f/Untitled%2022.png"/></a></figure><p id="a486737d-e02b-418b-8043-a5271fc4d122" class="">중복되는 데이터를 세그먼테이션 테이블로 옮겨 테이블의 크기 축소 → <strong>메모리 관리 효율적</strong></p><p id="a58c2a33-14e5-46eb-9977-3902182cb1cc" class="">
+</p></details></li></ul><h2 id="1747f0a0-3420-435d-9f44-e1a08c1fe042" class="">3. 세그먼테이션-페이징 혼용 기법의 주소 변환</h2><ul id="4b32449f-9a63-4305-9bc4-3d56782ccbe8" class="bulleted-list"><li style="list-style-type:disc"><strong>사용자 입장</strong>에서는 기본적으로 <strong>세그먼테이션 기법</strong> 사용</li></ul><ul id="f8ee5167-af2b-4e80-a923-5911cb399c82" class="bulleted-list"><li style="list-style-type:disc"><strong>메모리 관리자 입장</strong>에서는 <strong>페이징 기법</strong> 사용</li></ul><figure id="bf0bc588-7b22-4066-ab86-c4703a9b2c78" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2023.png"><img style="width:857px" src="Chapter%2008%20c8f8f/Untitled%2023.png"/></a></figure><ul id="2804b8a9-64fe-499f-bf3f-1c909ade79c0" class="toggle"><li><details open=""><summary><mark class="highlight-yellow_background"><strong>VA = &lt;S, P, D&gt;</strong></mark></summary><p id="b8ee67f2-daef-4bd0-94c8-77994424afbb" class=""><code>S</code> 세그먼트 번호</p><p id="56a29870-4847-49d5-a511-d567ab29e82e" class=""><code>P</code> 페이지 번호</p><p id="9556814c-d8fa-40c2-bdba-771c56988701" class=""><code>D</code> 페이지의 처음 위치에서 해당주소까지의 거리</p></details></li></ul><p id="4ed5277a-4c31-4543-be6f-6eabd803b1f9" class="">
+</p><p id="e27dfa53-c366-4bc3-a2ef-271573f5d65c" class=""><mark class="highlight-yellow_background"><strong>주소 변환 과정</strong></mark></p><ol type="1" id="62c3bf7b-375d-4053-aa69-1c36a97a193d" class="numbered-list" start="1"><li>가상 주소를 구함</li></ol><ol type="1" id="04e3f0ce-2313-4a79-81b9-33f942f9fd90" class="numbered-list" start="2"><li>세그먼테이션 테이블의 해당 세그먼트 번호로 가서 접근 권한 확인</li></ol><ol type="1" id="2c3177f0-4d45-4017-be0b-a9ba5e4d89f3" class="numbered-list" start="3"><li>페이지 테이블에서 해당 페이지가 어느 프레임에 저장되어있는지 확인<ol type="a" id="1e6ca630-4633-4593-a321-6fde1a0c7289" class="numbered-list" start="1"><li>TLB 히트 → 바로 메모리에 접근</li></ol><ol type="a" id="e8b8401a-a9b4-458d-95ae-08361b5e371d" class="numbered-list" start="2"><li>TLB 미스 → 스왑에서 가져옴</li></ol></li></ol><ol type="1" id="c2a3bb41-0fea-4a76-a5f6-025d9d02ffe9" class="numbered-list" start="4"><li>물리 메모리에 있는 프레임의 처음 위치에서 D만큼 떨어진 곳에 접근</li></ol><p id="7060ec10-e66e-45de-acb4-37b2b64044c2" class="">
+</p><h1 id="42773851-d665-46d8-b605-a8dd89ff1a3c" class="">05 [심화학습] 캐시 매핑 기법</h1><p id="9395175e-b6d1-4022-af8f-0edc8f55d227" class="">캐시의 크기는 메모리보다 작기 때문에 항상 메모리의 일부 페이지만 가지고 있음</p><p id="6e8f7d9d-4289-4b25-bfbf-5f74464f719b" class="">따라서 페이지 테이블의 직접 매핑과 캐시의 직접 매핑은 의미가 다름</p><ul id="195e50ba-5c5d-46f6-a30a-5034bf154036" class="bulleted-list"><li style="list-style-type:disc"><mark class="highlight-yellow_background"><strong>페이지 테이블의 직접 매핑</strong></mark> 물리 메모리에 <strong>모든 페이지 테이블</strong>을 가짐</li></ul><ul id="7743dd50-207d-45ce-867d-f056d5fe2b35" class="bulleted-list"><li style="list-style-type:disc"><mark class="highlight-yellow_background"><strong>캐시의 직접 매핑</strong></mark> 캐시된 데이터가 <strong>매번 같은 자리</strong>로 올라와서 캐시 테이블 전체를 찾아보지 않아도 캐시 히트나 캐시 미스를 바로 알 수 있음</li></ul><h2 id="0d03acc0-810c-4528-adf9-abe6bbdfaee4" class="">1. 캐시 직접 매핑</h2><ul id="49aaec28-feb4-4247-9297-0e31e9b0bebc" class="bulleted-list"><li style="list-style-type:disc">메모리의 페이지가 캐시의 같은 위치에 올라옴<ul id="bea9c98d-ee19-4338-ab1f-f16647c12e3f" class="bulleted-list"><li style="list-style-type:circle">태그만 확인하면 캐시 히트나 캐시 미스를 빠르게 확인할 수 있음</li></ul><ul id="d4f9b6a9-f8f7-4de8-9b76-7e8b0f77ebc5" class="bulleted-list"><li style="list-style-type:circle">자리다툼 발생</li></ul></li></ul><p id="557b3dd9-992f-4cfc-b87f-59c5d8b9c174" class=""><code>태그</code> 메모리 주소의 앞 2bit에 해당하는 값, 어떤 블록에서 올라온 데이터인지를 나타냄</p><figure id="cfbd5506-ba2e-46d4-a8a1-e3364c58eb96" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2024.png"><img style="width:765px" src="Chapter%2008%20c8f8f/Untitled%2024.png"/></a></figure><h2 id="5265cdc6-b270-499e-a62e-e1b645efb92c" class="">2. 캐시 연관 매핑</h2><ul id="99cc8552-83cf-4446-a079-a0a60bec5293" class="bulleted-list"><li style="list-style-type:disc">메모리 워드가 캐시의 어느 위치에도 자유롭게 올라갈 수 있음<ul id="a7ef8eb2-1e28-4b95-a8a2-8fa4ef8d1790" class="bulleted-list"><li style="list-style-type:circle">캐시가 메모리 워드의 주소를 전부 갖고 있어 캐시 메모리를 자유롭게 사용할 수 있음</li></ul></li></ul><ul id="4845ff30-d252-4d91-8dfe-5ec159846189" class="bulleted-list"><li style="list-style-type:disc">캐시 히트인지 미스인지 확인하기 위해 모든 주소를 검색해야 함</li></ul><figure id="276f143f-be9f-4475-bdf1-5d231049fb32" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2025.png"><img style="width:662px" src="Chapter%2008%20c8f8f/Untitled%2025.png"/></a></figure><h2 id="4c1a6416-cf1d-416b-b325-611431570e3b" class="">3. 캐시 집합-연관 매핑</h2><ul id="91405078-5e3f-46e3-8b81-9c85a6a630ad" class="bulleted-list"><li style="list-style-type:disc">캐시를 K개의 집합으로 나누고<ul id="3dc3ca3c-c548-414a-96ad-1650d6c58f22" class="bulleted-list"><li style="list-style-type:circle">같은 끝자리를 가진 캐시 메모리도 K개가 되기 때문에 자리다툼 문제 완화</li></ul></li></ul><ul id="e9c4b627-0642-4241-9670-4c2e55aad04e" class="bulleted-list"><li style="list-style-type:disc">각 집합에서 직접 매핑을 사용<ul id="7edc854a-9993-4033-9e5f-7da35ef17c81" class="bulleted-list"><li style="list-style-type:circle">집합 내에서 직접 매핑을 사용 → 바로 캐시 히트 여부를 알 수 있음</li></ul></li></ul><figure id="fa2232f4-dd16-4e22-a66f-3ebe5268cd36" class="image"><a href="Chapter%2008%20c8f8f/Untitled%2026.png"><img style="width:658px" src="Chapter%2008%20c8f8f/Untitled%2026.png"/></a></figure><p id="b1b4b72f-a538-4a48-95e8-3676a5ce5916" class="">
+</p></div></article></body></html>
