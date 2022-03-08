@@ -1,14 +1,17 @@
 # TIL
 
 <details>
-    <summary>summary</summary>
-        <div markdown="1">
-            <details>
-                <summary>2022-03-07</summary>
-                    <a markdown="1" src="https://github.com/kueyeon0429/TIL/blob/main/FrontEnd/ReactJS/BasicOfReact.md">Basic of React</a>
-            </details>
-        </div>
-    <br>
+<summary>summary</summary>
+<div markdown="1">       
+
+<details>
+<summary>2022-03-07</summary>
+<div markdown="1">       
+<a markdown="1" src="https://github.com/kueyeon0429/TIL/blob/main/FrontEnd/ReactJS/BasicOfReact.md">Basic of React</a>
+</div>
+</details>
+
+</div>
 </details>
 
 ***
