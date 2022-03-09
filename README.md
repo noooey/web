@@ -1,21 +1,5 @@
 # TIL
 
-<details>
-<summary>summary</summary>
-<div markdown="1">       
-
-<details>
-<summary>2022-03-07</summary>
-<div markdown="1">       
-<a markdown="1" src="https://github.com/kueyeon0429/TIL/blob/main/FrontEnd/ReactJS/BasicOfReact.md">Basic of React</a>
-</div>
-</details>
-
-</div>
-</details>
-
-***
-
 ## [OS](https://github.com/kueyeon0429/TIL/tree/main/OS)
 
 ### [쉽게 배우는 운영체제](https://github.com/kueyeon0429/TIL/tree/main/OS/%EC%89%BD%EA%B2%8C_%EB%B0%B0%EC%9A%B0%EB%8A%94_%EC%9A%B4%EC%98%81%EC%B2%B4%EC%A0%9C)
@@ -43,6 +27,7 @@
 ### [Word2Vec]()
 
 ***
-## [FrontEnd](https://github.com/kueyeon0429/TIL/tree/main/FrontEnd)
+## [Web](https://github.com/kueyeon0429/TIL/tree/main/FrontEnd)
 ### [ReactJS](https://github.com/kueyeon0429/TIL/tree/main/FrontEnd/ReactJS)
 - [Basic of React](https://github.com/kueyeon0429/TIL/blob/main/FrontEnd/ReactJS/BasicOfReact.md)
+- [React Practice](https://github.com/kueyeon0429/TIL/tree/main/FrontEnd/ReactJS/ReactPractice)
