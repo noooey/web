@@ -32,3 +32,5 @@
 - [Basic of React](https://github.com/kueyeon0429/TIL/blob/main/Web/ReactJS/BasicOfReact.md)
 - [React Practice](https://github.com/kueyeon0429/TIL/tree/main/Web/ReactJS/ReactPractice)
 - [React Admin Panel](https://github.com/kueyeon0429/TIL/tree/main/Web/ReactJS/admin_panel)
+- [React with Typescript Shopping Cart](https://github.com/kueyeon0429/TIL/tree/main/Web/ReactJS/react-shopping-cart)
+- [ToyProject: Todomate clone](https://github.com/kueyeon0429/TIL/tree/main/Web/ReactJS/react-note-app)
