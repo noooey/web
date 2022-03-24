@@ -1,4 +1,5 @@
 # 카카오톡 공유하기 테스트
+`참고` https://ellismin.com/2020/09/share-kakao/
 
 2022-03-24
 
