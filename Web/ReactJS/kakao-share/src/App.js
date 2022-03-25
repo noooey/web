@@ -1,9 +1,9 @@
-import KaKaoButton from './components/KaKaoButton';
+import KakaoButton from './components/KaKaoButton';
 
 function App() {
   return (
     <div>
-      <KaKaoButton />
+      <KakaoButton />
     </div>
   );
 }
