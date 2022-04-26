@@ -6,6 +6,8 @@
 
 -- list all tables   \d
 
+-- select * from table_name where id = 1;
+
 CREATE TABLE products (
     id INT,
     name VARCHAR(50),
@@ -24,3 +26,6 @@ CREATE TABLE restaurants (
 );
 
 INSERT INTO restaurants (id, name, location, price_range) values (123, 'mcdonalds', 'new yorks', 3);
+
+UPDATE films SET kind = 'Dramatic' WHERE kind = 'Drama';
+
