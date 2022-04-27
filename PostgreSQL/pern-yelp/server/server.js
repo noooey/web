@@ -1,10 +1,17 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require('cors');
 const db = require('./db')
 const morgan = require("morgan");
 
+// image upload
+const multer = require('multer');
+const sharp = require('sharp');
+const fs = require('fs');
+
 const app = express();
 
+app.use(cors())
 app.use(express.json());
 
 app.get("/api/v1/restaurants", async (req, res) => {
@@ -78,6 +85,47 @@ app.delete("/api/v1/restaurants/:id", async (req, res) => {
         console.log(err);
     }
 })
+
+// image upload
+fs.readdir("uploads", (err) => {
+    if (err) {
+        fs.mkdirSync("uploads");
+    }
+});
+
+const upload = multer({
+    storage: multer.diskStorage({
+        destination(req, file, cb) {
+            cb(null, "uploads/");
+        },
+        filename(req, file, cb) {
+            const ext = path.extname(file.originalname);
+            const timestamp = new Date().getTime().valueOf();
+            const filename = path.basename(file.originalname, ext) + timestamp + ext;
+            cb(null, filenmae);
+        },
+    }),
+});
+
+app.post("/api/v1/restaurants/", upload.single("selectImg"), async (req, res) => {
+    try {
+        sharp(req.file.path)
+        .resize({ width: 600 })
+        .withMetadata()
+        .toBuffer((err, buffer) => {
+            if (err) throw err;
+            fs.writeFile(req.file.path, buffer, (err) => {
+                if (err) throw err;
+            });
+        });
+        res.status(201).json({
+            filename: `${req.file.filename}`
+        });
+    } catch (err) {
+        console.log(err);
+    }
+})
+
 
 const port = process.env.PORT || 3001;
 
